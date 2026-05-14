@@ -18,12 +18,35 @@
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        input, select {
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], select {
             width: 100%;
             padding: 10px;
-            margin: 10px 0;
             border: 1px solid #ddd;
             border-radius: 5px;
+            font-size: 16px;
+        }
+        .checkbox-group {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .checkbox-group label {
+            font-weight: normal;
+            display: block;
+            margin: 5px 0;
         }
         button {
             background-color: #4CAF50;
@@ -34,38 +57,56 @@
             width: 100%;
             font-size: 16px;
             cursor: pointer;
+            margin-top: 10px;
         }
         button:hover {
             background-color: #45a049;
         }
         #resultat {
             margin-top: 20px;
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-radius: 5px;
             font-size: 18px;
+            text-align: center;
             font-weight: bold;
-            color: #333;
         }
-        .slider-container {
-            margin: 20px 0;
+        .idee-container {
+            margin-top: 10px;
+            display: none;
         }
-        .slider-container label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        input[type="range"] {
+        .idee-container input {
             width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Calculateur de Lumière 3D</h1>
-        <p>Entrez votre prénom et choisissez un objet supplémentaire :</p>
+        <p>Personnalisez votre lumière en forme de prénom !</p>
 
-        <input type="text" id="nom" placeholder="Ex: Emmanuel" required>
+        <div class="form-group">
+            <label for="nom">Votre prénom :</label>
+            <input type="text" id="nom" placeholder="Ex: Emmanuel" required>
+        </div>
 
-        <div class="slider-container">
-            <label for="prixObjet">Prix de l'objet supplémentaire (1€ - 5€) : <span id="valeurObjet">3€</span></label>
-            <input type="range" id="prixObjet" min="1" max="5" value="3" step="1">
+        <div class="form-group">
+            <label for="objet">Objet supplémentaire (optionnel) :</label>
+            <select id="objet" onchange="toggleIdea()">
+                <option value="0">Aucun objet (+0€)</option>
+                <option value="1">Petit objet (~1cm, ex: cœur sur un "i") (+1€)</option>
+                <option value="3">Objet moyen (~5cm, ex: étoile, lune) (+3€)</option>
+                <option value="5">Grand objet (~10cm, ex: animal, symbole) (+5€)</option>
+                <option value="custom">Autre (proposer une idée)</option>
+            </select>
+        </div>
+
+        <div class="idee-container" id="ideeContainer">
+            <label for="idee">Décrivez votre idée :</label>
+            <input type="text" id="idee" placeholder="Ex: Un nuage de 7cm">
         </div>
 
         <button onclick="calculerPrix()">Calculer le prix</button>
@@ -74,21 +115,29 @@
     </div>
 
     <script>
-        // Mettre à jour l'affichage du slider
-        document.getElementById('prixObjet').addEventListener('input', function() {
-            document.getElementById('valeurObjet').textContent = this.value + '€';
-        });
+        // Affiche/masque le champ "idée" si "Autre" est sélectionné
+        function toggleIdea() {
+            const objetSelect = document.getElementById('objet');
+            const ideeContainer = document.getElementById('ideeContainer');
+            if (objetSelect.value === 'custom') {
+                ideeContainer.style.display = 'block';
+            } else {
+                ideeContainer.style.display = 'none';
+            }
+        }
 
         // Fonction de calcul
         function calculerPrix() {
             const nom = document.getElementById('nom').value.trim();
-            const prixObjet = parseFloat(document.getElementById('prixObjet').value);
+            const objetSelect = document.getElementById('objet');
+            const idee = document.getElementById('idee').value.trim();
 
             if (nom === "") {
                 alert("Veuillez entrer un prénom !");
                 return;
             }
 
+            // Calcul du prix de base
             const nombreLettres = nom.length;
             let prixBase = 26; // Prix pour 4 lettres
 
@@ -97,10 +146,34 @@
                 prixBase += lettresSupplementaires * 1.5;
             }
 
+            // Calcul du prix de l'objet
+            let prixObjet = 0;
+            let descriptionObjet = "";
+
+            if (objetSelect.value === 'custom') {
+                if (idee === "") {
+                    alert("Veuillez décrire votre idée ou choisir un objet !");
+                    return;
+                }
+                prixObjet = 0; // À ajuster selon ton modèle (ex: prix fixe ou à calculer plus tard)
+                descriptionObjet = ` (Idée personnalisée: "${idee}")`;
+            } else {
+                prixObjet = parseFloat(objetSelect.value);
+                const options = {
+                    '0': '',
+                    '1': ' (Petit objet ~1cm)',
+                    '3': ' (Objet moyen ~5cm)',
+                    '5': ' (Grand objet ~10cm)'
+                };
+                descriptionObjet = options[objetSelect.value] || '';
+            }
+
             const prixTotal = prixBase + prixObjet;
 
-            document.getElementById('resultat').innerHTML =
-                `Prix pour "${nom}" : <span style="color: #4CAF50;">${prixTotal.toFixed(2)} €</span>`;
+            // Affichage du résultat
+            const resultatElement = document.getElementById('resultat');
+            resultatElement.innerHTML =
+                `Prix pour "${nom}"${descriptionObjet} : <span style="color: #2E7D32;">${prixTotal.toFixed(2)} €</span>`;
         }
     </script>
 </body>
