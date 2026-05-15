@@ -1,149 +1,138 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculateur de Lumière 3D</title>
+    <title>Calculateur Lumière 3D</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             max-width: 500px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f9f9f9;
         }
         .container {
-            background-color: white;
+            background: white;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         h1 {
-            color: #333;
+            color: #2E7D32;
             text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
         }
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-top: 12px;
             font-weight: bold;
         }
-        input[type="text"], select {
+        input, select {
             width: 100%;
             padding: 10px;
+            margin: 8px 0;
             border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        .checkbox-group {
-            margin: 10px 0;
-            padding: 10px;
-            background-color: #f9f9f9;
-            border-radius: 5px;
-        }
-        .checkbox-group label {
-            font-weight: normal;
-            display: block;
-            margin: 5px 0;
+            border-radius: 4px;
         }
         button {
-            background-color: #4CAF50;
+            background-color: #2E7D32;
             color: white;
-            padding: 12px;
             border: none;
-            border-radius: 5px;
+            padding: 12px;
             width: 100%;
-            font-size: 16px;
+            border-radius: 4px;
             cursor: pointer;
+            font-size: 16px;
             margin-top: 10px;
         }
         button:hover {
-            background-color: #45a049;
+            background-color: #1B5E20;
         }
         #resultat {
             margin-top: 20px;
-            padding: 10px;
-            background-color: #e8f5e9;
-            border-radius: 5px;
-            font-size: 18px;
+            padding: 15px;
             text-align: center;
-            font-weight: bold;
+            font-size: 18px;
+            border-radius: 4px;
+            background-color: #e8f5e9;
         }
-        .idee-container {
+        .error {
+            color: #d32f2f;
             margin-top: 10px;
-            display: none;
+            text-align: center;
         }
-        .idee-container input {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+        #custom-idee-container {
+            display: none;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Calculateur de Lumière 3D</h1>
-        <p>Personnalisez votre lumière en forme de prénom !</p>
+        <h1>Calculateur Lumière 3D</h1>
 
-        <div class="form-group">
-            <label for="nom">Votre prénom :</label>
-            <input type="text" id="nom" placeholder="Ex: Emmanuel" required>
-        </div>
+        <label for="nom">Prénom * :</label>
+        <input type="text" id="nom" placeholder="Ex: Emmanuel">
 
-        <div class="form-group">
-            <label for="objet">Objet supplémentaire (optionnel) :</label>
-            <select id="objet" onchange="toggleIdea()">
-                <option value="0">Aucun objet (+0€)</option>
-                <option value="1">Petit objet (~1cm, ex: cœur sur un "i") (+1€)</option>
-                <option value="3">Objet moyen (~5cm, ex: étoile, lune) (+3€)</option>
-                <option value="5">Grand objet (~10cm, ex: animal, symbole) (+5€)</option>
-                <option value="custom">Autre (proposer une idée)</option>
-            </select>
-        </div>
+        <label for="objet">Objet supplémentaire :</label>
+        <select id="objet">
+            <option value="0">Aucun objet</option>
+            <option value="1">Petit objet (~1cm) +1€</option>
+            <option value="3">Objet moyen (~5cm) +3€</option>
+            <option value="5">Grand objet (~10cm) +5€</option>
+            <option value="custom">Idée personnalisée</option>
+        </select>
 
-        <div class="idee-container" id="ideeContainer">
-            <label for="idee">Décrivez votre idée :</label>
-            <input type="text" id="idee" placeholder="Ex: Un nuage de 7cm">
+        <div id="custom-idee-container">
+            <label for="idee">Décrivez votre idée * :</label>
+            <input type="text" id="idee" placeholder="Ex: Une étoile en suspension">
         </div>
 
         <button onclick="calculerPrix()">Calculer le prix</button>
 
         <div id="resultat"></div>
+        <div id="error" class="error"></div>
     </div>
 
     <script>
-        // Affiche/masque le champ "idée" si "Autre" est sélectionné
-        function toggleIdea() {
-            const objetSelect = document.getElementById('objet');
-            const ideeContainer = document.getElementById('ideeContainer');
-            if (objetSelect.value === 'custom') {
-                ideeContainer.style.display = 'block';
+        // Affiche/masque le champ "Idée personnalisée"
+        document.getElementById('objet').addEventListener('change', function() {
+            const customContainer = document.getElementById('custom-idee-container');
+            if (this.value === 'custom') {
+                customContainer.style.display = 'block';
             } else {
-                ideeContainer.style.display = 'none';
+                customContainer.style.display = 'none';
             }
-        }
+        });
 
-        // Fonction de calcul
         function calculerPrix() {
             const nom = document.getElementById('nom').value.trim();
             const objetSelect = document.getElementById('objet');
             const idee = document.getElementById('idee').value.trim();
+            const errorElement = document.getElementById('error');
+            const resultatElement = document.getElementById('resultat');
 
+            // Réinitialise les messages
+            errorElement.textContent = '';
+            resultatElement.innerHTML = '';
+
+            // Vérifications
             if (nom === "") {
-                alert("Veuillez entrer un prénom !");
+                errorElement.textContent = "Veuillez entrer un prénom !";
                 return;
             }
 
-            // Calcul du prix de base
-            const nombreLettres = nom.length;
-            let prixBase = 26; // Prix pour 4 lettres
+            if (objetSelect.value === 'custom' && idee === "") {
+                errorElement.textContent = "Veuillez décrire votre idée !";
+                return;
+            }
 
+            // Calcul du prix de base (26€ pour 4 lettres, +1,5€ par lettre supplémentaire)
+            const nombreLettres = nom.length;
+            let prixBase = 26;
             if (nombreLettres > 4) {
-                const lettresSupplementaires = nombreLettres - 4;
-                prixBase += lettresSupplementaires * 1.5;
+                prixBase += (nombreLettres - 4) * 1.5;
             }
 
             // Calcul du prix de l'objet
@@ -151,29 +140,24 @@
             let descriptionObjet = "";
 
             if (objetSelect.value === 'custom') {
-                if (idee === "") {
-                    alert("Veuillez décrire votre idée ou choisir un objet !");
-                    return;
-                }
-                prixObjet = 0; // À ajuster selon ton modèle (ex: prix fixe ou à calculer plus tard)
-                descriptionObjet = ` (Idée personnalisée: "${idee}")`;
+                descriptionObjet = `Idée personnalisée: "${idee}"`;
             } else {
                 prixObjet = parseFloat(objetSelect.value);
                 const options = {
-                    '0': '',
-                    '1': ' (Petit objet ~1cm)',
-                    '3': ' (Objet moyen ~5cm)',
-                    '5': ' (Grand objet ~10cm)'
+                    '0': 'Aucun objet',
+                    '1': 'Petit objet (~1cm)',
+                    '3': 'Objet moyen (~5cm)',
+                    '5': 'Grand objet (~10cm)'
                 };
-                descriptionObjet = options[objetSelect.value] || '';
+                descriptionObjet = options[objetSelect.value];
             }
 
+            // Prix total
             const prixTotal = prixBase + prixObjet;
 
             // Affichage du résultat
-            const resultatElement = document.getElementById('resultat');
             resultatElement.innerHTML =
-                `Prix pour "${nom}"${descriptionObjet} : <span style="color: #2E7D32;">${prixTotal.toFixed(2)} €</span>`;
+                `Prix pour <strong>"${nom}"</strong> (${descriptionObjet}) : <strong style="color: #2E7D32;">${prixTotal.toFixed(2)} €</strong>`;
         }
     </script>
 </body>
