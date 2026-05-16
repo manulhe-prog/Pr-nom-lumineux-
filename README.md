@@ -10,7 +10,7 @@
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f9f9f1;
+            background-color: #f9f9f9;
         }
         .container {
             background: white;
@@ -42,7 +42,7 @@
         }
         .checkbox-option {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 10px;
         }
         .idee-container {
@@ -68,6 +68,36 @@
         button:hover {
             background-color: #1B5E20;
         }
+        #recap {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px dashed #2E7D32;
+            border-radius: 8px;
+            background-color: #f0f8f0;
+        }
+        .recap-title {
+            font-weight: bold;
+            color: #2E7D32;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .recap-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .recap-item-label {
+            flex: 1;
+        }
+        .recap-item-price {
+            color: #2E7D32;
+            font-weight: bold;
+        }
         #resultat {
             margin-top: 20px;
             padding: 15px;
@@ -80,6 +110,9 @@
             color: #d32f2f;
             margin-top: 10px;
             text-align: center;
+        }
+        .hide {
+            display: none;
         }
     </style>
 </head>
@@ -98,21 +131,21 @@
             </div>
             <div class="checkbox-option">
                 <input type="checkbox" id="objet-1" name="objet" value="1">
-                <label for="objet-1">Petit objet (~1cm) +1€</label>
+                <label for="objet-1">Petit objet (~1cm)</label>
                 <div class="idee-container">
                     <input type="text" id="idee-1" placeholder="Idée pour cet objet (optionnel)" disabled>
                 </div>
             </div>
             <div class="checkbox-option">
                 <input type="checkbox" id="objet-3" name="objet" value="3">
-                <label for="objet-3">Objet moyen (~5cm) +3€</label>
+                <label for="objet-3">Objet moyen (~5cm)</label>
                 <div class="idee-container">
                     <input type="text" id="idee-3" placeholder="Idée pour cet objet (optionnel)" disabled>
                 </div>
             </div>
             <div class="checkbox-option">
                 <input type="checkbox" id="objet-5" name="objet" value="5">
-                <label for="objet-5">Grand objet (~10cm) +5€</label>
+                <label for="objet-5">Grand objet (~10cm)</label>
                 <div class="idee-container">
                     <input type="text" id="idee-5" placeholder="Idée pour cet objet (optionnel)" disabled>
                 </div>
@@ -126,7 +159,13 @@
             </div>
         </div>
 
-        <button onclick="calculerPrix()">Calculer le prix</button>
+        <div id="recap" class="hide">
+            <div class="recap-title">📋 Récapitulatif de votre sélection</div>
+            <div id="recap-items"></div>
+        </div>
+
+        <button onclick="afficherRecap()">Afficher le récapitulatif</button>
+        <button onclick="calculerPrix()" style="background-color: #1976D2;">Calculer le prix</button>
 
         <div id="resultat"></div>
         <div id="error" class="error"></div>
@@ -148,6 +187,114 @@
                 }
             });
         });
+
+        // Affiche le récapitulatif visuel
+        function afficherRecap() {
+            const nom = document.getElementById('nom').value.trim();
+            const errorElement = document.getElementById('error');
+            const recapDiv = document.getElementById('recap');
+            const recapItemsDiv = document.getElementById('recap-items');
+
+            // Réinitialise les messages
+            errorElement.textContent = '';
+
+            // Vérifie si un prénom est saisi
+            if (nom === "") {
+                errorElement.textContent = "Veuillez entrer un prénom !";
+                recapDiv.classList.add('hide');
+                return;
+            }
+
+            // Vérifie si au moins une option est sélectionnée
+            const selectedCheckboxes = document.querySelectorAll('input[name="objet"]:checked');
+            if (selectedCheckboxes.length === 0) {
+                errorElement.textContent = "Veuillez sélectionner au moins un objet ou une idée personnalisée !";
+                recapDiv.classList.add('hide');
+                return;
+            }
+
+            // Vérifie si "Idée personnalisée" est cochée et que le champ est vide
+            const customCheckbox = document.getElementById('objet-custom');
+            if (customCheckbox.checked) {
+                const customIdeeInput = document.getElementById('idee-custom');
+                if (customIdeeInput.value.trim() === "") {
+                    errorElement.textContent = "Veuillez décrire votre idée personnalisée !";
+                    recapDiv.classList.add('hide');
+                    return;
+                }
+            }
+
+            // Affiche le récapitulatif
+            recapItemsDiv.innerHTML = '';
+            let totalRecap = 0;
+
+            // Ajoute le prénom
+            const nomItem = document.createElement('div');
+            nomItem.className = 'recap-item';
+            nomItem.innerHTML = `
+                <span class="recap-item-label">Prénom: <strong>${nom}</strong></span>
+                <span class="recap-item-price">-</span>
+            `;
+            recapItemsDiv.appendChild(nomItem);
+
+            // Ajoute les objets sélectionnés
+            selectedCheckboxes.forEach(checkbox => {
+                if (checkbox.id === 'objet-0') {
+                    return; // On ignore "Aucun objet"
+                }
+
+                const item = document.createElement('div');
+                item.className = 'recap-item';
+
+                if (checkbox.id === 'objet-custom') {
+                    const idee = document.getElementById('idee-custom').value.trim();
+                    item.innerHTML = `
+                        <span class="recap-item-label">Idée personnalisée: <strong>"${idee}"</strong></span>
+                        <span class="recap-item-price">0 €</span>
+                    `;
+                } else {
+                    const prixObjet = parseFloat(checkbox.value);
+                    totalRecap += prixObjet;
+                    const idee = document.getElementById(`idee-${checkbox.id.split('-')[1]}`).value.trim();
+                    const label = checkbox.nextElementSibling.textContent;
+                    const displayLabel = idee ? `${label} (${idee})` : label;
+                    item.innerHTML = `
+                        <span class="recap-item-label">${displayLabel}</span>
+                        <span class="recap-item-price">+${prixObjet} €</span>
+                    `;
+                }
+                recapItemsDiv.appendChild(item);
+            });
+
+            // Affiche le prix de base
+            const nombreLettres = nom.length;
+            let prixBase = 26;
+            if (nombreLettres > 4) {
+                prixBase += (nombreLettres - 4) * 1.5;
+            }
+            const baseItem = document.createElement('div');
+            baseItem.className = 'recap-item';
+            baseItem.innerHTML = `
+                <span class="recap-item-label">Prix de base (${nombreLettres} lettres)</span>
+                <span class="recap-item-price">${prixBase.toFixed(2)} €</span>
+            `;
+            recapItemsDiv.appendChild(baseItem);
+
+            // Affiche le total partiel (sans le prix de base)
+            if (totalRecap > 0) {
+                const totalItem = document.createElement('div');
+                totalItem.className = 'recap-item';
+                totalItem.style.fontWeight = 'bold';
+                totalItem.style.backgroundColor = '#f0f8f0';
+                totalItem.innerHTML = `
+                    <span class="recap-item-label">Total objets supplémentaires</span>
+                    <span class="recap-item-price">${totalRecap.toFixed(2)} €</span>
+                `;
+                recapItemsDiv.appendChild(totalItem);
+            }
+
+            recapDiv.classList.remove('hide');
+        }
 
         function calculerPrix() {
             const nom = document.getElementById('nom').value.trim();
@@ -205,7 +352,7 @@
                     const prixObjet = parseFloat(checkbox.value);
                     prixTotal += prixObjet;
                     const idee = document.getElementById(`idee-${checkbox.id.split('-')[1]}`).value.trim();
-                    const label = checkbox.nextElementSibling.textContent.split(' +')[0];
+                    const label = checkbox.nextElementSibling.textContent;
                     descriptionObjets.push(idee ? `${label} (${idee})` : label);
                 }
             });
