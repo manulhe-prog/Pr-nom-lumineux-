@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -8,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 500px;
+            max-width: 600px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f9f9f9;
@@ -28,12 +27,31 @@
             margin-top: 12px;
             font-weight: bold;
         }
-        input, select {
+        input[type="text"], input[type="number"] {
             width: 100%;
             padding: 10px;
             margin: 8px 0;
             border: 1px solid #ddd;
             border-radius: 4px;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 10px 0;
+        }
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .idee-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .idee-container input {
+            flex: 1;
         }
         button {
             background-color: #2E7D32;
@@ -44,7 +62,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
-            margin-top: 10px;
+            margin-top: 15px;
         }
         button:hover {
             background-color: #1B5E20;
@@ -62,10 +80,6 @@
             margin-top: 10px;
             text-align: center;
         }
-        #custom-idee-container {
-            display: none;
-            margin-top: 10px;
-        }
     </style>
 </head>
 <body>
@@ -75,18 +89,30 @@
         <label for="nom">Prénom * :</label>
         <input type="text" id="nom" placeholder="Ex: Emmanuel">
 
-        <label for="objet">Objet supplémentaire :</label>
-        <select id="objet">
-            <option value="0">Aucun objet</option>
-            <option value="1">Petit objet (~1cm) +1€</option>
-            <option value="3">Objet moyen (~5cm) +3€</option>
-            <option value="5">Grand objet (~10cm) +5€</option>
-            <option value="custom">Idée personnalisée</option>
-        </select>
+        <label>Objet supplémentaire :</label>
+        <div class="checkbox-group">
+            <div class="checkbox-option">
+                <input type="checkbox" id="objet-0" name="objet" value="0" checked>
+                <label for="objet-0">Aucun objet</label>
+            </div>
+            <div class="checkbox-option">
+                <input type="checkbox" id="objet-1" name="objet" value="1">
+                <label for="objet-1">Petit objet (~1cm) +1€</label>
+            </div>
+            <div class="checkbox-option">
+                <input type="checkbox" id="objet-3" name="objet" value="3">
+                <label for="objet-3">Objet moyen (~5cm) +3€</label>
+            </div>
+            <div class="checkbox-option">
+                <input type="checkbox" id="objet-5" name="objet" value="5">
+                <label for="objet-5">Grand objet (~10cm) +5€</label>
+            </div>
+        </div>
 
-        <div id="custom-idee-container">
-            <label for="idee">Décrivez votre idée * :</label>
-            <input type="text" id="idee" placeholder="Ex: Une étoile en suspension">
+        <div class="idee-container">
+            <input type="checkbox" id="objet-custom" name="objet" value="custom">
+            <label for="objet-custom">Idée personnalisée :</label>
+            <input type="text" id="idee" placeholder="Ex: Une étoile en suspension" disabled>
         </div>
 
         <button onclick="calculerPrix()">Calculer le prix</button>
@@ -96,20 +122,32 @@
     </div>
 
     <script>
-        // Affiche/masque le champ "Idée personnalisée"
-        document.getElementById('objet').addEventListener('change', function() {
-            const customContainer = document.getElementById('custom-idee-container');
-            if (this.value === 'custom') {
-                customContainer.style.display = 'block';
-            } else {
-                customContainer.style.display = 'none';
-            }
+        // Désactive les autres cases si une case est cochée
+        const checkboxes = document.querySelectorAll('input[name="objet"]');
+        const ideeInput = document.getElementById('idee');
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (this.id === 'objet-custom') {
+                    ideeInput.disabled = !this.checked;
+                    if (!this.checked) {
+                        ideeInput.value = '';
+                    }
+                }
+
+                // Désactive les autres cases si celle-ci est cochée
+                if (this.checked) {
+                    checkboxes.forEach(otherCheckbox => {
+                        if (otherCheckbox !== this) {
+                            otherCheckbox.checked = false;
+                        }
+                    });
+                }
+            });
         });
 
         function calculerPrix() {
             const nom = document.getElementById('nom').value.trim();
-            const objetSelect = document.getElementById('objet');
-            const idee = document.getElementById('idee').value.trim();
             const errorElement = document.getElementById('error');
             const resultatElement = document.getElementById('resultat');
 
@@ -117,13 +155,21 @@
             errorElement.textContent = '';
             resultatElement.innerHTML = '';
 
-            // Vérifications
+            // Vérifie si un prénom est saisi
             if (nom === "") {
                 errorElement.textContent = "Veuillez entrer un prénom !";
                 return;
             }
 
-            if (objetSelect.value === 'custom' && idee === "") {
+            // Vérifie si une option est sélectionnée
+            const selectedCheckbox = document.querySelector('input[name="objet"]:checked');
+            if (!selectedCheckbox) {
+                errorElement.textContent = "Veuillez sélectionner un objet ou une idée personnalisée !";
+                return;
+            }
+
+            // Si "Idée personnalisée" est sélectionnée, vérifie que le champ est rempli
+            if (selectedCheckbox.id === 'objet-custom' && ideeInput.value.trim() === "") {
                 errorElement.textContent = "Veuillez décrire votre idée !";
                 return;
             }
@@ -139,17 +185,17 @@
             let prixObjet = 0;
             let descriptionObjet = "";
 
-            if (objetSelect.value === 'custom') {
-                descriptionObjet = `Idée personnalisée: "${idee}"`;
+            if (selectedCheckbox.id === 'objet-custom') {
+                descriptionObjet = `Idée personnalisée: "${ideeInput.value.trim()}"`;
             } else {
-                prixObjet = parseFloat(objetSelect.value);
+                prixObjet = parseFloat(selectedCheckbox.value);
                 const options = {
                     '0': 'Aucun objet',
                     '1': 'Petit objet (~1cm)',
                     '3': 'Objet moyen (~5cm)',
                     '5': 'Grand objet (~10cm)'
                 };
-                descriptionObjet = options[objetSelect.value];
+                descriptionObjet = options[selectedCheckbox.value];
             }
 
             // Prix total
