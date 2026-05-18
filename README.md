@@ -384,7 +384,7 @@
 
             // Envoi des données à Google Sheets via Apps Script
             try {
-                const response = await fetch('[TON_URL_WEB_APP](https://docs.google.com/spreadsheets/d/1M6F8uNTnrVZ3i3ptTr6j2EOUSN9GDiSJZADtUq3i9Qk/edit?gid=0#gid=0)', {
+                const response = await fetch('https://docs.google.com/spreadsheets/d/1M6F8uNTnrVZ3i3ptTr6j2EOUSN9GDiSJZADtUq3i9Qk/edit?gid=0#gid=0', {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: {
