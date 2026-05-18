@@ -111,6 +111,12 @@
             margin-top: 10px;
             text-align: center;
         }
+        .success {
+            color: #2E7D32;
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
         .hide {
             display: none;
         }
@@ -165,10 +171,11 @@
         </div>
 
         <button onclick="afficherRecap()">Afficher le récapitulatif</button>
-        <button onclick="calculerPrix()" style="background-color: #1976D2;">Calculer le prix</button>
+        <button onclick="calculerEtEnregistrerPrix()" style="background-color: #1976D2;">Calculer et enregistrer</button>
 
         <div id="resultat"></div>
         <div id="error" class="error"></div>
+        <div id="success" class="success"></div>
     </div>
 
     <script>
@@ -296,13 +303,16 @@
             recapDiv.classList.remove('hide');
         }
 
-        function calculerPrix() {
+        // Calcule le prix et enregistre la demande
+        async function calculerEtEnregistrerPrix() {
             const nom = document.getElementById('nom').value.trim();
             const errorElement = document.getElementById('error');
+            const successElement = document.getElementById('success');
             const resultatElement = document.getElementById('resultat');
 
             // Réinitialise les messages
             errorElement.textContent = '';
+            successElement.textContent = '';
             resultatElement.innerHTML = '';
 
             // Vérifie si un prénom est saisi
@@ -338,22 +348,24 @@
             // Calcul du prix des objets sélectionnés
             let prixTotal = prixBase;
             let descriptionObjets = [];
+            let idees = [];
 
             selectedCheckboxes.forEach(checkbox => {
                 if (checkbox.id === 'objet-0') {
-                    // Aucun objet, on ne fait rien
-                    return;
+                    return; // On ignore "Aucun objet"
                 }
 
                 if (checkbox.id === 'objet-custom') {
                     const idee = document.getElementById('idee-custom').value.trim();
                     descriptionObjets.push(`Idée personnalisée: "${idee}"`);
+                    idees.push(idee);
                 } else {
                     const prixObjet = parseFloat(checkbox.value);
                     prixTotal += prixObjet;
                     const idee = document.getElementById(`idee-${checkbox.id.split('-')[1]}`).value.trim();
                     const label = checkbox.nextElementSibling.textContent;
                     descriptionObjets.push(idee ? `${label} (${idee})` : label);
+                    if (idee) idees.push(`${label}: ${idee}`);
                 }
             });
 
@@ -361,6 +373,30 @@
             const objetsDescription = descriptionObjets.length > 0 ? descriptionObjets.join(', ') : 'Aucun objet';
             resultatElement.innerHTML =
                 `Prix pour <strong>"${nom}"</strong> (${objetsDescription}) : <strong style="color: #2E7D32;">${prixTotal.toFixed(2)} €</strong>`;
+
+            // Préparation des données pour Google Sheets
+            const data = {
+                nom: nom,
+                objets: descriptionObjets.join(' | '),
+                prixTotal: prixTotal.toFixed(2),
+                idees: idees.join(' | ')
+            };
+
+            // Envoi des données à Google Sheets via Apps Script
+            try {
+                const response = await fetch('TON_URL_WEB_APP', {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                successElement.textContent = "Demande enregistrée avec succès !";
+            } catch (error) {
+                console.error("Erreur :", error);
+                errorElement.textContent = "Erreur lors de l'enregistrement. Vérifiez votre connexion.";
+            }
         }
     </script>
 </body>
